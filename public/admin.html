@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Car Auction Admin Panel</title>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <style>
+    body {
+      background-color: #00A3E0;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      color: black;
+    }
+    .header {
+      font-size: 28px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .flex {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .box {
+      border: 2px solid black;
+      padding: 16px;
+      background-color: white;
+      flex: 1 1 45%;
+      min-height: 100px;
+    }
+    .wide-box {
+      border: 2px solid black;
+      padding: 16px;
+      background-color: white;
+      margin-top: 20px;
+    }
+    button {
+      background: black;
+      color: white;
+      padding: 10px 20px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      margin: 6px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    #log-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+<div class="header">CAR AUCTION ADMIN PANEL</div>
+<div class="flex">
+  <div class="box">
+    <div><strong>Game ID</strong></div>
+    <input id="game-id-input" placeholder="e.g. HOC001" />
+    <button onclick="connectAsAdmin()">Connect</button>
+    <button onclick="startAuction()">Start Auction</button>
+  </div>
+  <div class="box">
+    <div><strong>Current Car</strong></div>
+    <div id="current-car">-</div>
+  </div>
+  <div class="box">
+    <div><strong>Top Bidder</strong></div>
+    <div id="top-bidder">-</div>
+  </div>
+  <div class="box">
+    <div><strong>Players</strong></div>
+    <ul id="player-list"></ul>
+  </div>
+</div>
+
+<div class="wide-box">
+  <div><strong>Auction Logs</strong></div>
+  <ul id="log-list"></ul>
+  <button onclick="exportLogs()">Export Logs to Google Sheet</button>
+</div>
+
+<script>
+  let socket;
+  let currentGameId = null;
+  const logs = [];
+
+  function connectAsAdmin() {
+    currentGameId = document.getElementById('game-id-input').value.trim();
+    if (!currentGameId) return alert("Enter a valid Game ID");
+
+    socket = io('http://localhost:3000');
+    socket.on('connect', () => {
+      socket.emit("adminJoin", { gameId: currentGameId });
+    });
+    socket.on('auctionEnded', (data) => {
+  alert("🏁 Auction Finished!");
+
+  // Optional: Show player results
+  const results = Object.entries(data.players)
+    .map(([name, p]) => {
+      const total = p.garage.reduce((sum, car) => sum + car.price, 0);
+      return `${name}: ${p.garage.length} cars — ₹${total.toLocaleString()}`;
+    })
+    .join('\n');
+
+  alert("Final Results:\n\n" + results);
+});
+
+    socket.on('adminGameState', updateAdminUI);
+    socket.on('logUpdate', (log) => {
+      logs.push(log);
+      const li = document.createElement("li");
+      li.textContent = log;
+      document.getElementById("log-list").appendChild(li);
+    });
+  }
+
+  function startAuction() {
+    if (socket && currentGameId) {
+      socket.emit('startGame', currentGameId);
+    }
+  }
+
+  function updateAdminUI(gameState) {
+    const car = gameState.cars[gameState.currentCarIndex];
+    const price = gameState.currentBidPrice;
+    document.getElementById("current-car").textContent = `${car.name} @ $${price.toLocaleString()}`;
+
+    if (gameState.topBidder === "None") {
+      document.getElementById("top-bidder").textContent = "None";
+    } else {
+      document.getElementById("top-bidder").textContent = `${gameState.topBidder} @ $${price.toLocaleString()}`;
+    }
+
+    const ul = document.getElementById("player-list");
+    ul.innerHTML = '';
+    for (const playerName in gameState.players) {
+      const player = gameState.players[playerName];
+      const li = document.createElement('li');
+      li.innerHTML = `${playerName}: $${player.money.toLocaleString()} <button onclick="kickPlayer('${playerName}')">❌</button>`;
+      ul.appendChild(li);
+    }
+  }
+
+  function kickPlayer(name) {
+    if (socket && currentGameId) {
+      socket.emit('kickPlayer', { gameId: currentGameId, playerName: name });
+    }
+  }
+
+  function exportLogs() {
+    const sheetUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfDyourFormID/formResponse";
+    logs.forEach(log => {
+      fetch(sheetUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `entry.1234567890=${encodeURIComponent(log)}` // replace with actual field ID
+      });
+    });
+    alert("Logs sent to Google Sheet!");
+  }
+</script>
+</body>
+</html>
