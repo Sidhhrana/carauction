@@ -98,7 +98,7 @@
     currentGameId = document.getElementById('game-id-input').value.trim();
     if (!currentGameId) return alert("Enter a valid Game ID");
 
-    socket = io('http://localhost:3000');
+    const socket = io('http://localhost:3000');
     socket.on('connect', () => {
       socket.emit("adminJoin", { gameId: currentGameId });
     });
