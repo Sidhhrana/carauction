@@ -332,6 +332,7 @@ io.on('connection', (socket) => {
 app.get('/', (req, res) => {
   res.send('🚗 Server is live! Car Auction backend working.');
 });
+app.use(express.static('public'));
 
 
 const PORT = process.env.PORT || 3000;
