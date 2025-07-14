@@ -227,7 +227,7 @@ io.on('connection', (socket) => {
 
         gameState.players[playerName] = gameState.players[playerName] || {
             name: playerName,
-            money: 50000000,
+            money: 100000000,
             garage: [],
             socketId: socket.id
         };
