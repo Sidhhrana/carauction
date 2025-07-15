@@ -18,9 +18,7 @@ app.use(cors());
 app.use(express.json());
 
 let gameStates = {};
-const cars = [ 
-
-    { name: "Volkswagen Polo", startPrice: 600000, minBid: 200000, engine: "1.2L Petrol", bhp: 74, fuel: "Petrol" },
+const cars = [  { name: "Volkswagen Polo", startPrice: 600000, minBid: 200000, engine: "1.2L Petrol", bhp: 74, fuel: "Petrol" },
     { name: "Ford EcoSport", startPrice: 800000, minBid: 200000, engine: "1.5L Petrol", bhp: 121, fuel: "Petrol" },
     { name: "BMW X2", startPrice: 3500000, minBid: 500000, engine: "2.0L Petrol", bhp: 192, fuel: "Petrol" },
     { name: "Toyota Hilux", startPrice: 3300000, minBid: 200000, engine: "2.8L Diesel", bhp: 201, fuel: "Diesel" },
@@ -80,8 +78,7 @@ const cars = [
     { name: "Maserati GranTurismo", startPrice: 15000000, minBid: 1000000, engine: "4.7L Petrol", bhp: 460, fuel: "Petrol" },
     { name: "Skoda Karoq", startPrice: 1500000, minBid: 200000, engine: "1.5L Petrol", bhp: 148, fuel: "Petrol" },
     { name: "Hyundai Elite i20", startPrice: 600000, minBid: 200000, engine: "1.2L Petrol", bhp: 82, fuel: "Petrol" },
-    { name: "BMW X1", startPrice: 3500000, minBid: 500000, engine: "2.0L Petrol", bhp: 192, fuel: "Petrol" }
-];
+    { name: "BMW X1", startPrice: 3500000, minBid: 500000, engine: "2.0L Petrol", bhp: 192, fuel: "Petrol" }];
 
 function logToAdmin(gameId, message) {
     io.to(`admin-${gameId}`).emit('logUpdate', message);
@@ -213,7 +210,7 @@ io.on('connection', (socket) => {
                 topBidder: "None",
                 topBidderSocketId: null,
                 auctionTimer: null,
-                timeLeft: 10,
+                timeLeft: 15,
                 auctionActive: false,
                 hostId: socket.id,
                 cars: [...cars]
@@ -346,11 +343,4 @@ server.listen(PORT, () => {
 });
 const path = require('path');
 app.use(express.static(path.join(__dirname, 'public')));
-const express = require('express');
-const app = express();
-
-app.get('/', (req, res) => {
-  res.send('✅ Server is running!');
-});
-
 
